@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace bbs.ExcelPlus
 {
-    public class ExcelPlusService
+    public class ExcelPlusService : IExcelPlusService
     {
 
         #region ///READ

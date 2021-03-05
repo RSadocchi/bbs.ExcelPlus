@@ -175,7 +175,7 @@ namespace bbs.ExcelPlus
                 SpreadsheetDocument spreadsheetDocument = SpreadsheetDocument.Create(memoryStream, SpreadsheetDocumentType.Workbook);
                 using (SpreadsheetDocument spreadsheet = SpreadsheetDocument.Create(excelFilename, SpreadsheetDocumentType.Workbook))
                     spreadsheet.WriteExcelFile(ds);
-                
+
                 Trace.WriteLine("Successfully created: " + excelFilename);
                 return true;
             }
@@ -183,6 +183,44 @@ namespace bbs.ExcelPlus
             {
                 Trace.WriteLine("Failed, exception thrown: " + ex.Message);
                 return false;
+            }
+        }
+
+        public static CellFormat GetCellFormat(Cell cell)
+        {
+            int styleIndex = (int)cell.StyleIndex.Value;
+            CellFormat cellFormat = (CellFormat)GetWorkbookPartFromCell(cell).WorkbookStylesPart.Stylesheet.CellFormats.ElementAt(styleIndex);
+            return cellFormat;
+        }
+
+        public static WorkbookPart GetWorkbookPartFromCell(Cell cell)
+        {
+            Worksheet workSheet = cell.Ancestors<Worksheet>().FirstOrDefault();
+            SpreadsheetDocument doc = workSheet.WorksheetPart.OpenXmlPackage as SpreadsheetDocument;
+            return doc.WorkbookPart;
+        }
+
+        public static void SetFormattedValue(Cell cell, ref CellModel data)
+        {
+            var format = GetCellFormat(cell);
+            if (format.NumberFormatId != 0)
+            {
+                string formatCode = GetWorkbookPartFromCell(cell).WorkbookStylesPart.Stylesheet.CellFormats.Elements<NumberingFormat>()
+                    .Where(i => i.NumberFormatId.Value == format.NumberFormatId.Value)
+                    .FirstOrDefault()?.FormatCode;
+
+                double number = double.Parse(cell.InnerText);
+                var _value = number.ToString(formatCode);
+
+                if (decimal.TryParse(cell.InnerText, out decimal numberVal))
+                {
+                    data.CellValue = cell.InnerText;
+                    data.CellValueNumber = numberVal;
+                }
+            }
+            else
+            {
+                data.CellValue = cell.InnerText;
             }
         }
     }
